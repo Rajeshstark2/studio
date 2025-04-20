@@ -43,6 +43,7 @@ const ChatPage = () => {
       const response = await financialLiteracyChatbot({
         question: inputText,
         language: language,
+        username: name, // Pass the username
       });
 
       // Add bot response to the chat
