@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/mode-toggle";
 import { financialLiteracyChatbot } from "@/ai/flows/financial-literacy-chatbot";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as SpeechRecognition from 'react-speech-recognition';
+import { Share2, Mic, Volume2 } from "lucide-react";
 
 const ChatPage = () => {
   const [name, setName] = useState("");
@@ -19,6 +22,23 @@ const ChatPage = () => {
   const [inputText, setInputText] = useState("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Speech Recognition
+  const [listening, setListening] = useState(false);
+  const {
+    transcript,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = SpeechRecognition.useSpeechRecognition();
+
+  // Text-to-Speech
+  const synth = useRef(window.speechSynthesis);
+
+  useEffect(() => {
+    if (transcript) {
+      setInputText(transcript);
+    }
+  }, [transcript]);
 
   useEffect(() => {
     // Load user data from local storage
@@ -32,7 +52,25 @@ const ChatPage = () => {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+
+    // Update document title
+    document.title = `FinLit Buddy - Chatting as ${name || "User"}`;
+  }, [messages, name, language]);
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem("language", newLanguage);
+  };
+
+  const speak = (text: string) => {
+    if (synth.current.speaking) {
+      synth.current.cancel();
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language;
+    synth.current.speak(utterance);
+  };
+
 
   const sendMessage = async () => {
     if (inputText.trim() === "") return;
@@ -54,6 +92,9 @@ const ChatPage = () => {
         { sender: "user", text: inputText },
         { sender: "bot", text: response.answer },
       ]);
+
+      // Speak the bot's response
+      speak(response.answer);
     } catch (error) {
       console.error("Error calling financialLiteracyChatbot:", error);
       // Handle error (e.g., display an error message to the user)
@@ -138,6 +179,29 @@ const ChatPage = () => {
     sendMessage();
   };
 
+  const shareOnWhatsApp = () => {
+    const message = encodeURIComponent(
+      `Check out FinLit Buddy! Learn about finance: ${window.location.href}`
+    );
+    window.open(`https://wa.me/?text=${message}`, "_blank");
+  };
+
+  const startListening = () => {
+    SpeechRecognition.startListening({ continuous: true });
+    setListening(true);
+  };
+
+  const stopListening = () => {
+    SpeechRecognition.stopListening();
+    setListening(false);
+  };
+
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <span className="text-red-500">Browser does not support speech recognition.</span>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-secondary">
       <div className="flex justify-between items-center p-4">
@@ -147,7 +211,22 @@ const ChatPage = () => {
             Welcome, {name || "User"} ({language})
           </p>
         </div>
-        <ModeToggle />
+        <div className="flex items-center gap-2">
+          <Select value={language} onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="hi">Hindi</SelectItem>
+              <SelectItem value="ta">Tamil</SelectItem>
+              <SelectItem value="te">Telugu</SelectItem>
+              <SelectItem value="ml">Malayalam</SelectItem>
+              <SelectItem value="kn">Kannada</SelectItem>
+            </SelectContent>
+          </Select>
+          <ModeToggle />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
@@ -183,7 +262,14 @@ const ChatPage = () => {
             </Button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Button
+            onClick={listening ? stopListening : startListening}
+            variant="secondary"
+            size="icon"
+          >
+            {listening ? <Volume2 /> : <Mic />}
+          </Button>
           <Textarea
             placeholder="Ask me anything..."
             value={inputText}
@@ -191,7 +277,13 @@ const ChatPage = () => {
             className="flex-1"
           />
           <Button onClick={sendMessage}>Send</Button>
+          <Button onClick={shareOnWhatsApp} variant="outline" size="icon">
+            <Share2 />
+          </Button>
         </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          {listening ? "Listening..." : ""}
+        </p>
       </div>
     </div>
   );
