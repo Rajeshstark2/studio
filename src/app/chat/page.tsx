@@ -163,6 +163,10 @@ const ChatPage = () => {
         { sender: "user", text: inputText },
         { sender: "bot", text: response.answer },
       ]);
+
+      // Speak the bot's response
+      speak(response.answer);
+
     } catch (error) {
       console.error("Error calling financialLiteracyChatbot:", error);
       // Handle error (e.g., display an error message to the user)
@@ -320,13 +324,38 @@ const ChatPage = () => {
             className="flex-1"
           />
           <Button onClick={sendMessage}>Send</Button>
-          {/* Voice-to-Text Button */}
-          <Button
+
+           {/* Voice-to-Text Button */}
+           <Button
             variant="outline"
             onClick={isListening ? stopListening : startListening}
           >
-            {isListening ? "Start Listening" : "Stop Listening"}
+            {isListening ? (
+              <Mic color="red" />
+            ) : (
+              <Mic />
+            )}
           </Button>
+
+          {/* Text-to-Speech Button */}
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (messages.length > 0 && messages[messages.length - 1].sender === 'bot') {
+                speak(messages[messages.length - 1].text);
+              } else {
+                toast({
+                  title: "No response to speak",
+                  description: "Please ask a question and wait for the bot to respond.",
+                });
+              }
+            }}
+            disabled={isSpeaking}
+          >
+            {isSpeaking ? <Volume2 color="blue" /> : <Volume2 />}
+          </Button>
+
+
         </div>
       </div>
     </div>
