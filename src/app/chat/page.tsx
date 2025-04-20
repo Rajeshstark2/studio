@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/mode-toggle";
 import { financialLiteracyChatbot } from "@/ai/flows/financial-literacy-chatbot";
+import { useToast } from "@/hooks/use-toast";
 
 const ChatPage = () => {
   const [name, setName] = useState("");
@@ -17,6 +18,7 @@ const ChatPage = () => {
   >([]);
   const [inputText, setInputText] = useState("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load user data from local storage
@@ -43,7 +45,7 @@ const ChatPage = () => {
       const response = await financialLiteracyChatbot({
         question: inputText,
         language: language,
-        username: name || 'user', // Pass the username or a default value
+        username: name || "user", // Pass the username or a default value
       });
 
       // Add bot response to the chat
@@ -63,6 +65,12 @@ const ChatPage = () => {
           text: "Sorry, I am unable to process your request at the moment.",
         },
       ]);
+      toast({
+        title: "Error",
+        description:
+          "There was an error processing your request. Please try again.",
+        variant: "destructive",
+      });
     }
 
     setInputText("");
@@ -120,7 +128,9 @@ const ChatPage = () => {
   };
 
   const getPredefinedQuestions = () => {
-    return translatedPredefinedQuestions[language] || translatedPredefinedQuestions["en"];
+    return (
+      translatedPredefinedQuestions[language] || translatedPredefinedQuestions["en"]
+    );
   };
 
   const sendPredefinedQuestion = (question: string) => {
@@ -152,7 +162,7 @@ const ChatPage = () => {
               className={`rounded-xl px-4 py-2 ${
                 message.sender === "user"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
+                  : "bg-muted text-foreground"
               }`}
             >
               {message.text}
