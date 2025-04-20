@@ -10,8 +10,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { financialLiteracyChatbot } from "@/ai/flows/financial-literacy-chatbot";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import * as SpeechRecognition from 'react-speech-recognition';
-import { Share2, Mic, Volume2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const ChatPage = () => {
   const [name, setName] = useState("");
@@ -23,22 +22,12 @@ const ChatPage = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Speech Recognition
-  const [listening, setListening] = useState(false);
-  const {
-    transcript,
-    resetTranscript,
-    browserSupportsSpeechRecognition
-  } = SpeechRecognition.useSpeechRecognition();
+  // Voice-to-text state and functions
+  const [isListening, setIsListening] = useState(false);
+  const recognition = useRef<SpeechRecognition | null>(null);
 
-  // Text-to-Speech
-  const synth = useRef(window.speechSynthesis);
-
-  useEffect(() => {
-    if (transcript) {
-      setInputText(transcript);
-    }
-  }, [transcript]);
+  // Text-to-voice state
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     // Load user data from local storage
@@ -53,24 +42,113 @@ const ChatPage = () => {
         chatContainerRef.current.scrollHeight;
     }
 
-    // Update document title
-    document.title = `FinLit Buddy - Chatting as ${name || "User"}`;
-  }, [messages, name, language]);
+    // Initialize SpeechRecognition
+    if ("SpeechRecognition" in window) {
+      recognition.current = new SpeechRecognition();
+      recognition.current.continuous = true;
+      recognition.current.lang = language;
 
-  const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
-    localStorage.setItem("language", newLanguage);
+      recognition.current.onstart = () => {
+        setIsListening(true);
+        toast({
+          title: "Voice Recognition Started",
+        });
+      };
+
+      recognition.current.onerror = (event: any) => {
+        setIsListening(false);
+        console.error("Speech recognition error:", event.error);
+        toast({
+          title: "Voice Recognition Error",
+          description: `Error: ${event.error}`,
+          variant: "destructive",
+        });
+      };
+
+      recognition.current.onend = () => {
+        setIsListening(false);
+        toast({
+          title: "Voice Recognition Ended",
+        });
+      };
+
+      recognition.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join("");
+        setInputText(transcript);
+      };
+    } else {
+      console.log("Speech Recognition API not supported in this browser.");
+      toast({
+        title: "Voice Recognition Not Supported",
+        description: "Your browser does not support the Speech Recognition API.",
+        variant: "destructive",
+      });
+    }
+
+    return () => {
+      if (recognition.current) {
+        recognition.current.abort();
+      }
+    };
+  }, [language, toast]);
+
+  useEffect(() => {
+    if (recognition.current) {
+      recognition.current.lang = language;
+    }
+  }, [language]);
+
+  const startListening = () => {
+    if (recognition.current && !isListening) {
+      try {
+        recognition.current.start();
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({
+          title: "Error Starting Voice Recognition",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (recognition.current) {
+      recognition.current.stop();
+      setIsListening(false);
+    }
   };
 
   const speak = (text: string) => {
-    if (synth.current.speaking) {
-      synth.current.cancel();
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = language;
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      speechSynthesis.speak(utterance);
+    } else {
+      console.log("Text-to-speech not supported in this browser.");
+      toast({
+        title: "Text-to-Speech Not Supported",
+        description: "Your browser does not support the Speech Synthesis API.",
+        variant: "destructive",
+      });
     }
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language;
-    synth.current.speak(utterance);
   };
 
+  const shareOnWhatsApp = () => {
+    const whatsappMessage = `Check out FinLit Buddy! ${window.location.href}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      whatsappMessage
+    )}`;
+    window.open(whatsappUrl, "_blank");
+  };
 
   const sendMessage = async () => {
     if (inputText.trim() === "") return;
@@ -179,28 +257,10 @@ const ChatPage = () => {
     sendMessage();
   };
 
-  const shareOnWhatsApp = () => {
-    const message = encodeURIComponent(
-      `Check out FinLit Buddy! Learn about finance: ${window.location.href}`
-    );
-    window.open(`https://wa.me/?text=${message}`, "_blank");
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem("language", newLanguage);
   };
-
-  const startListening = () => {
-    SpeechRecognition.startListening({ continuous: true });
-    setListening(true);
-  };
-
-  const stopListening = () => {
-    SpeechRecognition.stopListening();
-    setListening(false);
-  };
-
-  if (!browserSupportsSpeechRecognition) {
-    return (
-      <span className="text-red-500">Browser does not support speech recognition.</span>
-    );
-  }
 
   return (
     <div className="flex flex-col h-screen bg-secondary">
@@ -211,7 +271,7 @@ const ChatPage = () => {
             Welcome, {name || "User"} ({language})
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-4 items-center">
           <Select value={language} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select language" />
@@ -262,14 +322,7 @@ const ChatPage = () => {
             </Button>
           ))}
         </div>
-        <div className="flex gap-2 items-center">
-          <Button
-            onClick={listening ? stopListening : startListening}
-            variant="secondary"
-            size="icon"
-          >
-            {listening ? <Volume2 /> : <Mic />}
-          </Button>
+        <div className="flex gap-2">
           <Textarea
             placeholder="Ask me anything..."
             value={inputText}
@@ -277,13 +330,25 @@ const ChatPage = () => {
             className="flex-1"
           />
           <Button onClick={sendMessage}>Send</Button>
-          <Button onClick={shareOnWhatsApp} variant="outline" size="icon">
-            <Share2 />
+          {/* Voice-to-Text Button */}
+          <Button
+            variant="outline"
+            onClick={isListening ? stopListening : startListening}
+          >
+            {isListening ? "Stop Listening" : "Start Listening"}
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          {listening ? "Listening..." : ""}
-        </p>
+
+        {/* Help Someone Mode */}
+        <div className="mt-4">
+          <Label htmlFor="helpSomeone">Help Someone Mode</Label>
+          <Input type="checkbox" id="helpSomeone" />
+        </div>
+
+        {/* WhatsApp Share Button */}
+        <Button variant="secondary" onClick={shareOnWhatsApp}>
+          Share on WhatsApp
+        </Button>
       </div>
     </div>
   );
