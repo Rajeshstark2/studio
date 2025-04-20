@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/mode-toggle";
+import { financialLiteracyChatbot } from "@/ai/flows/financial-literacy-chatbot";
 
 const ChatPage = () => {
   const [name, setName] = useState("");
@@ -37,17 +38,31 @@ const ChatPage = () => {
     // Add user message to the chat
     setMessages([...messages, { sender: "user", text: inputText }]);
 
-    // Simulate bot response (replace with actual Gemini API call)
-    setTimeout(() => {
+    // Call the financialLiteracyChatbot function
+    try {
+      const response = await financialLiteracyChatbot({
+        question: inputText,
+        language: language,
+      });
+
+      // Add bot response to the chat
+      setMessages([
+        ...messages,
+        { sender: "user", text: inputText },
+        { sender: "bot", text: response.answer },
+      ]);
+    } catch (error) {
+      console.error("Error calling financialLiteracyChatbot:", error);
+      // Handle error (e.g., display an error message to the user)
       setMessages([
         ...messages,
         { sender: "user", text: inputText },
         {
           sender: "bot",
-          text: `This is a dummy response to: ${inputText} in ${language}`,
+          text: "Sorry, I am unable to process your request at the moment.",
         },
       ]);
-    }, 500);
+    }
 
     setInputText("");
   };
