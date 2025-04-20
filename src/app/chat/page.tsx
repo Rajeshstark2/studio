@@ -142,14 +142,6 @@ const ChatPage = () => {
     }
   };
 
-  const shareOnWhatsApp = () => {
-    const whatsappMessage = `Check out FinLit Buddy! ${window.location.href}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-      whatsappMessage
-    )}`;
-    window.open(whatsappUrl, "_blank");
-  };
-
   const sendMessage = async () => {
     if (inputText.trim() === "") return;
 
@@ -338,17 +330,6 @@ const ChatPage = () => {
             {isListening ? "Stop Listening" : "Start Listening"}
           </Button>
         </div>
-
-        {/* Help Someone Mode */}
-        <div className="mt-4">
-          <Label htmlFor="helpSomeone">Help Someone Mode</Label>
-          <Input type="checkbox" id="helpSomeone" />
-        </div>
-
-        {/* WhatsApp Share Button */}
-        <Button variant="secondary" onClick={shareOnWhatsApp}>
-          Share on WhatsApp
-        </Button>
       </div>
     </div>
   );
