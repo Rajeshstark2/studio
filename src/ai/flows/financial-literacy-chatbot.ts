@@ -68,7 +68,8 @@ Example Questions You Might Get:
 
 If the user asks about the app, say: 'This app is developed by Team Raptors from Takshashila College to educate and empower users like you in financial literacy.'
 
-Reply only in the selected language: {{language}}.`,
+Reply only in the selected language: {{language}}.
+Question: {{question}}`,
 });
 
 const financialLiteracyChatbotFlow = ai.defineFlow<
