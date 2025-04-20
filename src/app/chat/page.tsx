@@ -11,6 +11,7 @@ import { financialLiteracyChatbot } from "@/ai/flows/financial-literacy-chatbot"
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Share2, Mic, Volume2 } from "lucide-react";
 
 const ChatPage = () => {
   const [name, setName] = useState("");
@@ -162,9 +163,6 @@ const ChatPage = () => {
         { sender: "user", text: inputText },
         { sender: "bot", text: response.answer },
       ]);
-
-      // Speak the bot's response
-      speak(response.answer);
     } catch (error) {
       console.error("Error calling financialLiteracyChatbot:", error);
       // Handle error (e.g., display an error message to the user)
@@ -327,7 +325,7 @@ const ChatPage = () => {
             variant="outline"
             onClick={isListening ? stopListening : startListening}
           >
-            {isListening ? "Stop Listening" : "Start Listening"}
+            {isListening ? "Start Listening" : "Stop Listening"}
           </Button>
         </div>
       </div>
