@@ -68,14 +68,60 @@ const ChatPage = () => {
     setInputText("");
   };
 
-  const predefinedQuestions = [
-    "What is investment?",
-    "Define insurance.",
-    "What is SIP?",
-    "How to invest in the stock market?",
-    "What is UPI?",
-    "How to avoid financial fraud?",
-  ];
+  const translatedPredefinedQuestions = {
+    en: [
+      "What is investment?",
+      "Define insurance.",
+      "What is SIP?",
+      "How to invest in the stock market?",
+      "What is UPI?",
+      "How to avoid financial fraud?",
+    ],
+    hi: [
+      "निवेश क्या है?",
+      "बीमा को परिभाषित करें।",
+      "एसआईपी क्या है?",
+      "शेयर बाजार में निवेश कैसे करें?",
+      "यूपीआई क्या है?",
+      "वित्तीय धोखाधड़ी से कैसे बचें?",
+    ],
+    ta: [
+      "முதலீடு என்றால் என்ன?",
+      "காப்பீட்டை வரையறுக்கவும்.",
+      "எஸ்ஐபி என்றால் என்ன?",
+      "பங்குச் சந்தையில் எப்படி முதலீடு செய்வது?",
+      "UPI என்றால் என்ன?",
+      "நிதி மோசடியை எவ்வாறு தவிர்ப்பது?",
+    ],
+    te: [
+      "పెట్టుబడి అంటే ఏమిటి?",
+      "భీమాను నిర్వచించండి.",
+      "SIP అంటే ఏమిటి?",
+      "స్టాక్ మార్కెట్‌లో ఎలా పెట్టుబడి పెట్టాలి?",
+      "UPI అంటే ఏమిటి?",
+      "ఆర్థిక మోసాలను ఎలా నివారించాలి?",
+    ],
+    ml: [
+      "നിക്ഷേപം എന്നാൽ എന്ത്?",
+      "ഇൻഷുറൻസ് നിർവചിക്കുക.",
+      "എന്താണ് SIP?",
+      "ഓഹരി വിപണിയിൽ എങ്ങനെ നിക്ഷേപം നടത്താം?",
+      "UPI എന്നാൽ എന്ത്?",
+      "സാമ്പത്തിക തട്ടിപ്പ് എങ്ങനെ ഒഴിവാക്കാം?",
+    ],
+    kn: [
+      "ಹೂಡಿಕೆ ಎಂದರೇನು?",
+      "ವಿಮೆಯನ್ನು ವ್ಯಾಖ್ಯಾನಿಸಿ.",
+      "SIP ಎಂದರೇನು?",
+      "ಷೇರು ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಹೂಡಿಕೆ ಮಾಡುವುದು ಹೇಗೆ?",
+      "UPI ಎಂದರೇನು?",
+      "ಹಣಕಾಸು ವಂಚನೆಯನ್ನು ತಪ್ಪಿಸುವುದು ಹೇಗೆ?",
+    ],
+  };
+
+  const getPredefinedQuestions = () => {
+    return translatedPredefinedQuestions[language] || translatedPredefinedQuestions["en"];
+  };
 
   const sendPredefinedQuestion = (question: string) => {
     setInputText(question);
@@ -117,7 +163,7 @@ const ChatPage = () => {
 
       <div className="p-4">
         <div className="mb-2 flex flex-wrap gap-2">
-          {predefinedQuestions.map((question, index) => (
+          {getPredefinedQuestions().map((question, index) => (
             <Button
               key={index}
               variant="outline"
